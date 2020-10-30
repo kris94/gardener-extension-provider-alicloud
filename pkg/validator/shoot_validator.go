@@ -26,13 +26,6 @@ import (
 )
 
 func (v *Shoot) validateShoot(ctx context.Context, shoot *core.Shoot, infraConfig *alicloud.InfrastructureConfig) error {
-	// Network validation
-	networkPath := field.NewPath("spec", "networking")
-
-	if errList := alicloudvalidation.ValidateNetworking(shoot.Spec.Networking, networkPath); len(errList) != 0 {
-		return errList.ToAggregate()
-	}
-
 	// Provider validation
 	fldPath := field.NewPath("spec", "provider")
 
@@ -86,6 +79,13 @@ func (v *Shoot) validateShootUpdate(ctx context.Context, oldShoot, shoot *core.S
 }
 
 func (v *Shoot) validateShootCreation(ctx context.Context, shoot *core.Shoot) error {
+	// Network validation
+	networkPath := field.NewPath("spec", "networking")
+	if errList := alicloudvalidation.ValidateNetworking(shoot.Spec.Networking, networkPath); len(errList) != 0 {
+		return errList.ToAggregate()
+	}
+
+	// Infra validation
 	fldPath := field.NewPath("spec", "provider")
 	infraConfig, err := checkAndDecodeInfrastructureConfig(v.decoder, shoot.Spec.Provider.InfrastructureConfig, fldPath.Child("infrastructureConfig"))
 	if err != nil {

@@ -33,21 +33,18 @@ import (
 // This CIDR can be accessed by any machine which is running with AliCloud VPC.
 const AliCloudVPCCidr = "100.64.0.0/10"
 
-// ValidateNetworking validates the network settings of a Shoot.
+// ValidateNetworking validates the network settings of a Shoot during creation.
+// As the network settings are immutable, we don't need to do validation for update.
 func ValidateNetworking(networking core.Networking, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	if networking.Nodes == nil {
-		allErrs = append(allErrs, field.Required(fldPath.Child("nodes"), "a nodes CIDR must be provided for AliCloud shoots"))
-	} else {
-		if cidrvalidation.NetworksIntersect(*networking.Nodes, AliCloudVPCCidr) {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("nodes"), *networking.Nodes, "must not overlap with 100.64.0.0/10 because 10.64.0.0/10 is reserved by AliCloud"))
-		}
+	if networking.Nodes != nil && cidrvalidation.NetworksIntersect(*networking.Nodes, AliCloudVPCCidr) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("nodes"), *networking.Nodes, "must not overlap with 100.64.0.0/10 because 10.64.0.0/10 is reserved by AliCloud"))
 	}
-	if cidrvalidation.NetworksIntersect(*networking.Pods, AliCloudVPCCidr) {
+	if networking.Pods != nil && cidrvalidation.NetworksIntersect(*networking.Pods, AliCloudVPCCidr) {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("pods"), *networking.Pods, "must not overlap with 100.64.0.0/10 because 10.64.0.0/10 is reserved by AliCloud"))
 	}
-	if cidrvalidation.NetworksIntersect(*networking.Services, AliCloudVPCCidr) {
+	if networking.Services != nil && cidrvalidation.NetworksIntersect(*networking.Services, AliCloudVPCCidr) {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("services"), *networking.Services, "must not overlap with 100.64.0.0/10 because 10.64.0.0/10 is reserved by AliCloud"))
 	}
 
